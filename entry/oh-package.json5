@@ -1,12 +1,11 @@
 {
   "name": "entry",
   "version": "1.0.0",
-  "description": "Please describe the basic information.",
+  "description": "Pillendar Entry Ability.",
   "main": "",
-  "author": "",
-  "license": "",
+  "author": "Pillowe",
+  "license": "Apache-2.0",
   "dependencies": {
-    "hdsBaseComponent": "^1.0.0"
   },
   "devDependencies": {},
   "dynamicDependencies": {}

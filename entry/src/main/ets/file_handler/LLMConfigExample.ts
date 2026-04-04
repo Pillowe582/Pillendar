@@ -45,7 +45,7 @@ export class Prompts{
 }
 
 export const API_CONFIG = {
-  baseUrl:"https://open.bigmodel.cn/api/paas/v4/chat/completions",
-  apiKey:"f2520e07c80947b598f1b75932970939.uI6yQknYRpf1Vn42",
-  model:"GLM-4-Flash-250414"
+  baseUrl:"",
+  apiKey:"",
+  model:""
 }
