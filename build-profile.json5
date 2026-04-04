@@ -1,0 +1,56 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\Pillowe\\.ohos\\config\\default_Pillender_jhIWI77kaHoCPnzDxavB8R7MOmHnRduf0hwJwch_PMg=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B857A55CDC7D47815411231DEFF22AAC0A099133F9E669A7109654412B0267445E9368F5BF717D5",
+          "profile": "C:\\Users\\Pillowe\\.ohos\\config\\default_Pillender_jhIWI77kaHoCPnzDxavB8R7MOmHnRduf0hwJwch_PMg=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\Pillowe\\.ohos\\config\\default_Pillender_jhIWI77kaHoCPnzDxavB8R7MOmHnRduf0hwJwch_PMg=.p12",
+          "storePassword": "0000001B0149E2E2915E50D602D3A7684813E7FACED50CFE971C23E14B388FDADC69DE9A4C5EF363B24BE7"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "targetSdkVersion": "6.0.0(20)",
+        "compatibleSdkVersion": "6.0.0(20)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}
