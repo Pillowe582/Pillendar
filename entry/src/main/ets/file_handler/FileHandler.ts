@@ -9,6 +9,8 @@ import { ScheduleJson } from  '../data_types/ScheduleJson'
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import backgroundTaskManager from '@ohos.resourceschedule.backgroundTaskManager';
+import { WantAgent } from '@ohos.wantAgent';
+import { wantAgent } from '@kit.AbilityKit';
 
 
 enum dataTypes {SCHEDULE}
@@ -56,6 +58,7 @@ export default class FileHandler{
           }
         })
         id = delayInfo.requestId
+
         console.info('Background task started');
       } catch (err) {
         console.error('Failed to start background task:', err);
@@ -117,6 +120,7 @@ export default class FileHandler{
     private static async sendNotification(title: string='',text:string='',additionalText:string=''):Promise<void>{
       let notificationRequest: notificationManager.NotificationRequest = {
         id: 1,
+        wantAgent:await this.getWantAgent(),
         notificationSlotType:notificationManager.SlotType.SERVICE_INFORMATION,
         content: {
           notificationContentType: notificationManager.ContentType.NOTIFICATION_CONTENT_BASIC_TEXT, // 普通文本类型通知
@@ -134,5 +138,20 @@ export default class FileHandler{
         }
         console.log("发布通知成功")
       });
+    }
+
+    private static async getWantAgent() : Promise<WantAgent>{
+      let wantAgentInfo: wantAgent.WantAgentInfo = {
+        wants:[
+          {
+            bundleName:'com.pillowe.pillendar',
+            abilityName:'EntryAbility'
+          }
+        ],
+        actionType:wantAgent.OperationType.START_ABILITY,
+        requestCode:0,
+        actionFlags:[wantAgent.WantAgentFlags.CONSTANT_FLAG]
+      };
+      return await wantAgent.getWantAgent(wantAgentInfo)
     }
 }
