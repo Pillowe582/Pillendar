@@ -4,3 +4,4 @@
 /build
 /.cxx
 /.test
+/src/main/ets/file_handler/LLMConfig.ts
