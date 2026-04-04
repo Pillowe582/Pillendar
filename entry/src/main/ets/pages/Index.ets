@@ -284,7 +284,7 @@ export default class PillendarAbility extends UIAbility {
 @Component
 struct Index {
   @StorageProp('subtitle') subtitle:string="Strange";
-  @StorageLink('mainItems') items: Array<ScheduleEvent>=[new ScheduleEvent()];
+  @StorageLink('mainItems') items: Array<ScheduleEvent>=[];
 
 
 

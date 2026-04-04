@@ -6,20 +6,21 @@ import { abilityAccessCtrl, AbilityConstant,
   UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
-import { calendarManager } from '@kit.CalendarKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { systemShare } from '@kit.ShareKit';
 import FileHandler from '../file_handler/FileHandler';
 import { ScheduleEvent } from '../data_types/ScheduleEvent'
 import { ScheduleJson } from  '../data_types/ScheduleJson'
 import { CalendarService } from '../services/CalendarService';
+import { notificationManager } from '@kit.NotificationKit';
 
 const permissions: Array<Permissions> = [
   'ohos.permission.READ_CALENDAR',
   'ohos.permission.WRITE_CALENDAR',
   'ohos.permission.MEDIA_LOCATION',
   'ohos.permission.READ_MEDIA',
-  'ohos.permission.INTERNET'
+  'ohos.permission.INTERNET',
+
 ];
 const DOMAIN = 0x0000;
 
@@ -82,8 +83,18 @@ async function checkPermissions(context: common.UIAbilityContext): Promise<void>
 export default class EntryAbility extends UIAbility {
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
 
+
     try {
       await checkPermissions(this.context);
+      // 请求通知权限
+      try{
+        await notificationManager.requestEnableNotification(this.context);
+        notificationManager.addSlot(notificationManager.SlotType.SERVICE_INFORMATION)
+        console.info('已授权通知权限');
+      }catch (error){
+        const err: BusinessError = error as BusinessError;
+        console.error(`通知权限请求失败：${err.code}，${err.message}`);
+      }
       this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
       hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
 

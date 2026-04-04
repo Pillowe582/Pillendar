@@ -6,6 +6,9 @@ import { textRecognition } from '@kit.CoreVisionKit';
 import { http } from '@kit.NetworkKit';
 import { Prompts, API_CONFIG } from './LLMConfig';
 import { ScheduleJson } from  '../data_types/ScheduleJson'
+import { notificationManager } from '@kit.NotificationKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import backgroundTaskManager from '@ohos.resourceschedule.backgroundTaskManager';
 
 
 enum dataTypes {SCHEDULE}
@@ -41,6 +44,22 @@ export default class FileHandler{
     }
 
     private static async requestAI(message: string, type: dataTypes):Promise<any>{
+      let id:number;
+      let delayInfo:backgroundTaskManager.DelaySuspendInfo;
+      try {
+        delayInfo =  backgroundTaskManager.requestSuspendDelay("Processing AI request",()=>{
+          console.info("后台任务将过期...")
+          try{
+            backgroundTaskManager.cancelSuspendDelay(id)
+          }catch (err){
+            console.error("申请后台任务失败：")
+          }
+        })
+        id = delayInfo.requestId
+        console.info('Background task started');
+      } catch (err) {
+        console.error('Failed to start background task:', err);
+      }
       const httpRequest = http.createHttp();
       let prompt: string="";
       switch (type){
@@ -81,11 +100,39 @@ export default class FileHandler{
         console.info("大模型返回：",content);
         const schedules = JSON.parse(content) as { events: ScheduleJson[] };
         AppStorage.setOrCreate('subtitle', `Found ${schedules.events.length} New Schedules` );
+        this.sendNotification("Analyze succeeded",`Found ${schedules.events.length} New Schedules`,'Woohoo!')
         return schedules.events || [];
       } catch (err){
         AppStorage.setOrCreate('subtitle', 'Request Failed :(' );
         console.error("调用大模型失败：",err);
         return [];
+      } finally {
+        if(delayInfo !== null){
+          backgroundTaskManager.cancelSuspendDelay(id)
+          console.info('后台任务完成');
+        }
       }
+    }
+
+    private static async sendNotification(title: string='',text:string='',additionalText:string=''):Promise<void>{
+      let notificationRequest: notificationManager.NotificationRequest = {
+        id: 1,
+        notificationSlotType:notificationManager.SlotType.SERVICE_INFORMATION,
+        content: {
+          notificationContentType: notificationManager.ContentType.NOTIFICATION_CONTENT_BASIC_TEXT, // 普通文本类型通知
+          normal: {
+            title: title,
+            text: text,
+            additionalText: additionalText,
+          }
+        }
+      };
+      notificationManager.publish(notificationRequest, (err: BusinessError) => {
+        if (err) {
+          console.error(`发布通知失败： ${err.code}, ${err.message}`);
+          return;
+        }
+        console.log("发布通知成功")
+      });
     }
 }
