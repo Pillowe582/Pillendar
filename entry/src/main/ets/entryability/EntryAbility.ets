@@ -18,7 +18,7 @@ const permissions: Array<Permissions> = [
   'ohos.permission.READ_CALENDAR',
   'ohos.permission.WRITE_CALENDAR',
   'ohos.permission.MEDIA_LOCATION',
-  'ohos.permission.WRITE_CALENDAR',
+  'ohos.permission.READ_MEDIA',
   'ohos.permission.INTERNET'
 ];
 const DOMAIN = 0x0000;
@@ -53,11 +53,11 @@ async function checkPermissionGrant(permission: Permissions): Promise<abilityAcc
 
 async function checkPermissions(context: common.UIAbilityContext): Promise<void> {
   let grantStatuses: Array<boolean>=new Array(permissions.length)
-  let hasAllPermission:boolean=false;
+  let hasAllPermission:boolean=true;
   for(let i=0;i<permissions.length;i++){
     grantStatuses[i]=await checkPermissionGrant(permissions[i]) === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
     console.log("Has " + permissions[i]+": "+grantStatuses[i])
-    hasAllPermission ||= grantStatuses[i];
+    hasAllPermission &&= grantStatuses[i];
   }
   let atManager:abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
   if(!hasAllPermission){

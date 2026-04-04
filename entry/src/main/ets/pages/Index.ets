@@ -258,7 +258,7 @@ struct ScheduleItemBuilder {
 }
 
 
-export default class PillenderAbility extends UIAbility {
+export default class PillendarAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
   }
 

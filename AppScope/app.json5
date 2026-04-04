@@ -1,6 +1,6 @@
 {
   "app": {
-    "bundleName": "com.pillowe.pillender",
+    "bundleName": "com.pillowe.pillendar",
     "vendor": "example",
     "versionCode": 1000000,
     "versionName": "1.0.0",

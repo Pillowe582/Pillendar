@@ -6,7 +6,7 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "@hms.hds.hdsBaseComponent": "^1.0.0"
+    "hdsBaseComponent": "^1.0.0"
   },
   "devDependencies": {},
   "dynamicDependencies": {}
