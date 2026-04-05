@@ -1,5 +1,5 @@
 # Pillendar
-> 仅适配HarmonyOS NEXT！
+> 仅适配HarmonyOS NEXT！原则上5.0版本及以上即可
 ### 一个帮你添加日程的小工具
 - 把日程截图通过系统分享给Pillendar
 - AI会OCR出文本，交给LLM帮你分析日程
