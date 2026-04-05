@@ -96,10 +96,7 @@ export default class FileHandler{
         );
         console.info("API返回HTTP Code：",response.responseCode);
         const json = JSON.parse(response.result as string) as Record<string,any>;
-        const content = json.choices[0].message.content
-          .replace("```json", "")
-          .replace("```", "")
-          .trim();
+        const content = json.choices[0].message.content.replace(/<think>[\s\S]*?<\/think>/g, "").replace("```json", "").replace("```", "").trim();
         console.info("大模型返回：",content);
         const schedules = JSON.parse(content) as { events: ScheduleJson[] };
         AppStorage.setOrCreate('subtitle', `Found ${schedules.events.length} New Schedules` );
