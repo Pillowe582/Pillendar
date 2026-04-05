@@ -10,3 +10,6 @@
 /.clang-tidy
 **/.test
 /.appanalyzer
+Certification.csr
+Certification.p12
+Pillender.cer
