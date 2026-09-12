@@ -1,16 +1,20 @@
-import { abilityAccessCtrl, AbilityConstant,
+import {
+  abilityAccessCtrl,
+  AbilityConstant,
   bundleManager,
   common,
   ConfigurationConstant,
   Permissions,
-  UIAbility, Want } from '@kit.AbilityKit';
+  UIAbility,
+  Want
+} from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { systemShare } from '@kit.ShareKit';
 import FileHandler from '../file_handler/FileHandler';
 import { ScheduleEvent } from '../data_types/ScheduleEvent'
-import { ScheduleJson } from  '../data_types/ScheduleJson'
+import { ScheduleJson } from '../data_types/ScheduleJson'
 import { CalendarService } from '../services/CalendarService';
 import { notificationManager } from '@kit.NotificationKit';
 
@@ -53,17 +57,16 @@ async function checkPermissionGrant(permission: Permissions): Promise<abilityAcc
 }
 
 async function checkPermissions(context: common.UIAbilityContext): Promise<void> {
-  let grantStatuses: Array<boolean>=new Array(permissions.length)
-  let hasAllPermission:boolean=true;
-  for(let i=0;i<permissions.length;i++){
-    grantStatuses[i]=await checkPermissionGrant(permissions[i]) === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
-    console.log("Has " + permissions[i]+": "+grantStatuses[i])
+  let grantStatuses: Array<boolean> = new Array(permissions.length)
+  let hasAllPermission: boolean = true;
+  for (let i = 0; i < permissions.length; i++) {
+    grantStatuses[i] = await checkPermissionGrant(permissions[i]) === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
+    console.log("Has " + permissions[i] + ": " + grantStatuses[i])
     hasAllPermission &&= grantStatuses[i];
   }
-  let atManager:abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
-  if(!hasAllPermission){
-    await atManager.requestPermissionsFromUser(context,permissions).then((data)=>
-    {
+  let atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
+  if (!hasAllPermission) {
+    await atManager.requestPermissionsFromUser(context, permissions).then((data) => {
       let grantStatus: number[] = data.authResults;
       let length: number = grantStatus.length;
       for (let i = 0; i < length; i++) {
@@ -79,19 +82,16 @@ async function checkPermissions(context: common.UIAbilityContext): Promise<void>
 }
 
 
-
 export default class EntryAbility extends UIAbility {
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
-
-
     try {
       await checkPermissions(this.context);
       // 请求通知权限
-      try{
+      try {
         await notificationManager.requestEnableNotification(this.context);
         notificationManager.addSlot(notificationManager.SlotType.SERVICE_INFORMATION)
         console.info('已授权通知权限');
-      }catch (error){
+      } catch (error) {
         const err: BusinessError = error as BusinessError;
         console.error(`通知权限请求失败：${err.code}，${err.message}`);
       }
@@ -104,25 +104,24 @@ export default class EntryAbility extends UIAbility {
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
     await CalendarService.getInstance().init(this.context)
 
-    console.info('被拉起原因：'+launchParam.launchReasonMessage);
+    console.info('被拉起原因：' + launchParam.launchReasonMessage);
     if (launchParam.launchReasonMessage === 'ReasonMessage_SystemShare') {
-      AppStorage.setOrCreate('subtitle', 'Requesting LLM...' );
+      AppStorage.setOrCreate('subtitle', 'Requesting LLM...');
       // 识别为被系统分享拉起
       try {
         const data = await systemShare.getSharedData(want);
         const fetchedEvents: ScheduleJson[] = await FileHandler.fetchFile(data);
         let items = AppStorage.get<Array<ScheduleEvent>>('mainItems');
-        fetchedEvents.forEach(event=>{
-          if(items) {
+        fetchedEvents.forEach(event => {
+          if (items) {
             items.push(new ScheduleEvent(event))
           }
         })
-      } catch (error)
-        {
-          AppStorage.setOrCreate('subtitle', '? Whasssup' );
-          console.error("获取分享数据失败："+error);
-          let fileName="获取分享数据失败";
-        }
+      } catch (error) {
+        AppStorage.setOrCreate('subtitle', '? Whasssup');
+        console.error("获取分享数据失败：" + error);
+        let fileName = "获取分享数据失败";
+      }
     }
 
   }
@@ -135,7 +134,7 @@ export default class EntryAbility extends UIAbility {
     // Main window is created, set main page for this ability
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
-    windowStage.loadContent('pages/Index', (err) => {
+    windowStage.loadContent('pages/Index/Index', (err) => {
       if (err.code) {
         hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
         return;
@@ -158,27 +157,26 @@ export default class EntryAbility extends UIAbility {
     // Ability has back to background
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onBackground');
   }
+
   async onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
-    console.info('被拉起原因：'+launchParam.launchReasonMessage);
+    console.info('被拉起原因：' + launchParam.launchReasonMessage);
     if (launchParam.launchReasonMessage === 'ReasonMessage_SystemShare') {
-      AppStorage.setOrCreate('subtitle', 'Requesting LLM...' );
+      AppStorage.setOrCreate('subtitle', 'Requesting LLM...');
       // 识别为被系统分享拉起
       try {
         const data = await systemShare.getSharedData(want);
         const fetchedEvents: ScheduleJson[] = await FileHandler.fetchFile(data);
         let items = AppStorage.get<Array<ScheduleEvent>>('mainItems');
-        fetchedEvents.forEach(event=>{
-          if(items) {
+        fetchedEvents.forEach(event => {
+          if (items) {
             items.push(new ScheduleEvent(event))
           }
         })
-      } catch (error)
-      {
-        AppStorage.setOrCreate('subtitle', '? Whasssup' );
-        console.error("获取分享数据失败："+error);
-        let fileName="获取分享数据失败";
+      } catch (error) {
+        AppStorage.setOrCreate('subtitle', '? Whasssup');
+        console.error("获取分享数据失败：" + error);
+        let fileName = "获取分享数据失败";
       }
     }
   }
-
 }

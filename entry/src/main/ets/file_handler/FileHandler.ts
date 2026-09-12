@@ -90,7 +90,10 @@ export default class FileHandler{
                 role: "user",
                 content:message
               }],
+            thinking:{"type":"enabled"},
+            reasoning_effort: "high",
             model:API_CONFIG.model,
+            response_format:{'type': 'json_object'},
           })
           }
         );
