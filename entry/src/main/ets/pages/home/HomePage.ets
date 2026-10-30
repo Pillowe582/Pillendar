@@ -20,6 +20,16 @@ export struct HomePage {
         Scroll(this.itemsScroller) {
           Column() {
             Blank().height('20%').width('100%')
+
+            // 无日程时在列表顶部显示空状态提示
+            if (this.items.length === 0) {
+              Text('Nothing yet~')
+                .width('90%')
+                .fontSize(16)
+                .fontColor(Color.Gray)
+                .textAlign(TextAlign.Center)
+            }
+
             Grid() {
 
               ForEach(this.items, (item: ScheduleEvent, index: number) => {

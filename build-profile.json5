@@ -7,11 +7,11 @@
         "material": {
           "certpath": "C:\\Users\\Pillowe\\.ohos\\config\\default_Pillender_jhIWI77kaHoCPnzDxavB8R7MOmHnRduf0hwJwch_PMg=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001B9B26E12A122649EAE66D7033D470682E3B649F639D5BAD4DEF9402BBBAFDA103F945A64200CAA9",
+          "keyPassword": "0000001A588D1B08802B54EC2CD8538C0E3DB00C8BEF94BD1030B2DB0127E2141818F3114377C5821DB6",
           "profile": "C:\\Users\\Pillowe\\.ohos\\config\\default_Pillender_jhIWI77kaHoCPnzDxavB8R7MOmHnRduf0hwJwch_PMg=.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "C:\\Users\\Pillowe\\.ohos\\config\\default_Pillender_jhIWI77kaHoCPnzDxavB8R7MOmHnRduf0hwJwch_PMg=.p12",
-          "storePassword": "0000001B2A6FF32A665128647B3E8C7D6EFF294A3BFED2B91F8B8BBAEA42C305F52B9DDDFE2DBA5B685D37"
+          "storePassword": "0000001AE89C677A066D7671057A50CCE527069D1C15032248745A131AD0DC57023816D751E5194D23A3"
         }
       }
     ],
