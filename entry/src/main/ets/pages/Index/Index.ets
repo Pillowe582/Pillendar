@@ -26,20 +26,51 @@ export default class PillendarAbility extends UIAbility {
 @Entry
 @Component
 struct Index {
+  @State fontColor: string = '#ffa0a0a0';
+  @State selectedFontColor: string = '#007DFF';
+  @State selectedIndex: number = 0;
+  @State currentIndex: number = 0;
 
   build() {
     Tabs({ barPosition: BarPosition.End }) {
       TabContent() {
         HomePage()
       }
-      .tabBar('首页')
+      .tabBar(this.tabBuilder(0, '首页'))
 
       TabContent() {
         SettingsPage()
       }
-      .tabBar('设置')
+      .tabBar(this.tabBuilder(1, '设置'))
     }
     .width('100%')
     .height('100%')
+    .animationMode(AnimationMode.ACTION_FIRST)
+    .onChange((index: number) => {
+      console.info('onChange: ' + index)
+      this.currentIndex = index
+    })
+    .onSelected((index: number) => {
+      console.info('onSelected: ' + index)
+      this.selectedIndex = index
+    })
+    .backgroundBlurStyle(BlurStyle.COMPONENT_THICK)
+  }
+
+  @Builder
+  tabBuilder(index: number, name: string) {
+    Column() {
+      Text(name)
+        .fontColor(this.selectedIndex === index ? this.selectedFontColor : this.fontColor)
+        .fontSize(16)
+        .fontWeight(this.selectedIndex === index ? 500 : 400)
+        .lineHeight(22)
+        .margin({ top: 17, bottom: 7 })
+      Divider()
+        .strokeWidth(2)
+        .color(this.selectedFontColor)
+        .opacity(this.selectedIndex === index ? 1 : 0)
+    }.width('100%')
   }
 }
+
