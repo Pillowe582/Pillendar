@@ -46,9 +46,14 @@ export struct ScheduleItemActions {
         .width('50%')
         .backgroundColor(Color.Green)
         .onClick(() => {
-          addScheduleToCalendar(this.item, () => {
-            this.onDelete();
-          })
+          addScheduleToCalendar(this.item)
+            .then(() => {
+              this.getUIContext().getPromptAction().showToast({ message: '已添加到日历' });
+              this.onDelete();
+            })
+            .catch((err: Error) => {
+              this.getUIContext().getPromptAction().showToast({ message: `添加到日历失败：${err.message}` });
+            })
         })
     }
     .padding({ top: 16 })
