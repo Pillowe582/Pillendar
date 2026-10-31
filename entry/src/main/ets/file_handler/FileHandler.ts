@@ -44,7 +44,7 @@ export default class FileHandler{
       }
     }
 
-    private static async requestAI(message: string):Promise<any>{
+    private static async requestAI(message: string):Promise<ScheduleJson[]>{
       let id:number;
       let delayInfo:backgroundTaskManager.DelaySuspendInfo;
       try {
@@ -62,6 +62,29 @@ export default class FileHandler{
       } catch (err) {
         console.error('Failed to start background task:', err);
       }
+
+      try{
+        const events = await this.requestSchedules(message)
+        AppStorage.setOrCreate('subtitle', `Found ${events.length} New Schedules` );
+        this.sendNotification("Analyze succeeded",`Found ${events.length} New Schedules`,'Woohoo!')
+        return events;
+      } catch (err){
+        AppStorage.setOrCreate('subtitle', 'Request Failed :(' );
+        console.error("调用大模型失败：",err);
+        return [];
+      } finally {
+        if(delayInfo !== null){
+          backgroundTaskManager.cancelSuspendDelay(id)
+          console.info('后台任务完成');
+        }
+      }
+    }
+
+    /**
+     * 请求大模型从文本中提取日程，失败时抛出异常
+     * @param message 用户文本，如 OCR 识别结果或手动输入的描述
+     */
+    public static async requestSchedules(message: string):Promise<ScheduleJson[]>{
       const httpRequest = http.createHttp();
       const settings = LLMSettingsService.getInstance().get();
 
@@ -74,26 +97,20 @@ export default class FileHandler{
               "Content-Type": "application/json",
               "Authorization": `Bearer ${settings.apiKey}`
             },
-          extraData: buildRequestBody(settings, message)
+            extraData: buildRequestBody(settings, message)
           }
         );
         console.info("API返回HTTP Code：",response.responseCode);
+        if (response.responseCode !== http.ResponseCode.OK) {
+          throw new Error(`状态码 ${response.responseCode}`)
+        }
         const json = JSON.parse(response.result as string) as Record<string,any>;
         const content = this.getOutputText(json);
         console.info("大模型返回：",content);
         const schedules = JSON.parse(content) as { events: ScheduleJson[] };
-        AppStorage.setOrCreate('subtitle', `Found ${schedules.events.length} New Schedules` );
-        this.sendNotification("Analyze succeeded",`Found ${schedules.events.length} New Schedules`,'Woohoo!')
-        return schedules.events || [];
-      } catch (err){
-        AppStorage.setOrCreate('subtitle', 'Request Failed :(' );
-        console.error("调用大模型失败：",err);
-        return [];
+        return schedules.events;
       } finally {
-        if(delayInfo !== null){
-          backgroundTaskManager.cancelSuspendDelay(id)
-          console.info('后台任务完成');
-        }
+        httpRequest.destroy();
       }
     }
 
