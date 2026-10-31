@@ -151,7 +151,7 @@ export struct SettingsPage {
                   Text('Base URL')
                     .fontSize(14)
                     .fontColor(Color.Gray)
-                  TextInput({ text: this.baseUrl, placeholder: 'https://api.deepseek.com/chat/completions' })
+                  TextInput({ text: this.baseUrl, placeholder: 'https://api.deepseek.com/responses' })
                     .height(48)
                     .margin({ top: 6 })
                     .fontSize(15)
@@ -173,7 +173,7 @@ export struct SettingsPage {
                     .fontSize(14)
                     .fontColor(Color.Gray)
                   Row({ space: 8 }) {
-                    TextInput({ text: this.apiKey, placeholder: 'sk-...' })
+                    TextInput({ text: this.apiKey, placeholder: 'sk-...，只保存在本地' })
                       .type(InputType.Password)
                       .showPasswordIcon(true)
                       .layoutWeight(1)
@@ -233,7 +233,12 @@ export struct SettingsPage {
                           .fontColor(this.model === modelName ? Color.White : Color.Gray)
                           .backgroundColor(this.model === modelName ? '#007DFF' : '#303030')
                           .borderRadius(14)
-                          .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+                          .padding({
+                            left: 12,
+                            right: 12,
+                            top: 6,
+                            bottom: 6
+                          })
                           .margin({ top: 8, right: 8 })
                           .onClick(() => {
                             this.model = modelName;

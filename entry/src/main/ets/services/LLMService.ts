@@ -29,12 +29,12 @@ export class LLMService {
     return result.data.map((model: Record<string, string>) => model.id);
   }
 
-  // 由聊天接口地址推导模型列表地址，如 https://api.deepseek.com/chat/completions -> https://api.deepseek.com/models
+  // 由 Responses 接口地址推导模型列表地址，如 https://api.deepseek.com/responses -> https://api.deepseek.com/models
   private static getModelsUrl(baseUrl: string): string {
-    const chatCompletionsPath = '/chat/completions';
+    const responsesPath = '/responses';
     const trimmedUrl = baseUrl.replace(/\/+$/, '');
-    const modelsBaseUrl = trimmedUrl.endsWith(chatCompletionsPath)
-      ? trimmedUrl.slice(0, -chatCompletionsPath.length)
+    const modelsBaseUrl = trimmedUrl.endsWith(responsesPath)
+      ? trimmedUrl.slice(0, -responsesPath.length)
       : trimmedUrl;
     return `${modelsBaseUrl}/models`;
   }

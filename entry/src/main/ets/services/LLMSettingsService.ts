@@ -3,7 +3,7 @@ import { preferences } from '@kit.ArkData';
 import { LLMSettings } from '../data_types/LLMSettings';
 import { DEFAULT_LLM_SETTINGS } from '../file_handler/LLMConfig';
 
-const PREFERENCES_NAME: string = 'llm_settings';
+const PREFERENCES_NAME: string = 'llm_settings_responses';
 const SETTINGS_KEY: string = 'settings';
 
 // 大模型配置持久化服务：Preferences 存储 + 内存缓存

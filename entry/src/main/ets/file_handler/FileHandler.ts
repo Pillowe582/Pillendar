@@ -79,7 +79,7 @@ export default class FileHandler{
         );
         console.info("API返回HTTP Code：",response.responseCode);
         const json = JSON.parse(response.result as string) as Record<string,any>;
-        const content = json.choices[0].message.content.replace(/<think>[\s\S]*?<\/think>/g, "").replace("```json", "").replace("```", "").trim();
+        const content = this.getOutputText(json);
         console.info("大模型返回：",content);
         const schedules = JSON.parse(content) as { events: ScheduleJson[] };
         AppStorage.setOrCreate('subtitle', `Found ${schedules.events.length} New Schedules` );
@@ -95,6 +95,25 @@ export default class FileHandler{
           console.info('后台任务完成');
         }
       }
+    }
+
+    // 取出 Responses API 输出中 message 的文本内容
+    private static getOutputText(responseJson: Record<string,any>):string{
+      const outputItems = responseJson.output as Array<Record<string,any>>;
+      let outputText = "";
+      outputItems.forEach((item: Record<string,any>) => {
+        if (item.type !== "message") {
+          return;
+        }
+
+        const contentParts = item.content as Array<Record<string,string>>;
+        contentParts.forEach((part: Record<string,string>) => {
+          if (part.type === "output_text") {
+            outputText += part.text;
+          }
+        });
+      });
+      return outputText;
     }
 
     private static async sendNotification(title: string='',text:string='',additionalText:string=''):Promise<void>{

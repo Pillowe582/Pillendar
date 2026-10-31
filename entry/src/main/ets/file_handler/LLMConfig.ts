@@ -3,7 +3,7 @@ import { LLMSettings } from '../data_types/LLMSettings';
 // 大模型默认配置与请求体构造：配置项由设置页修改，prompt 与请求 JSON 支持占位符
 
 export const DEFAULT_LLM_SETTINGS: LLMSettings = {
-  baseUrl: 'https://api.deepseek.com/chat/completions',
+  baseUrl: 'https://api.deepseek.com/responses',
   apiKey: '',
   model: 'deepseek-flash',
   prompt: `你是一个日程提取助手。
@@ -35,22 +35,25 @@ export const DEFAULT_LLM_SETTINGS: LLMSettings = {
 只返回JSON，不要解释。`,
   requestJson: `{
   "model": "{{model}}",
-  "messages": [
-    {
-      "role": "system",
-      "content": "{{prompt}}"
-    },
+  "instructions": "{{prompt}}",
+  "input": [
     {
       "role": "user",
-      "content": "{{message}}"
+      "content": [
+        {
+          "type": "input_text",
+          "text": "{{message}}"
+        }
+      ]
     }
   ],
-  "thinking": {
-    "type": "enabled"
+  "reasoning": {
+    "effort": "high"
   },
-  "reasoning_effort": "high",
-  "response_format": {
-    "type": "json_object"
+  "text": {
+    "format": {
+      "type": "json_object"
+    }
   }
 }`
 };
