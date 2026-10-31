@@ -4,7 +4,8 @@ import { fileIo } from '@kit.CoreFileKit';
 import { image } from '@kit.ImageKit';
 import { textRecognition } from '@kit.CoreVisionKit';
 import { http } from '@kit.NetworkKit';
-import { Prompts, API_CONFIG } from './LLMConfig';
+import { buildRequestBody } from './LLMConfig';
+import { LLMSettingsService } from '../services/LLMSettingsService';
 import { ScheduleJson } from  '../data_types/ScheduleJson'
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
@@ -12,8 +13,6 @@ import backgroundTaskManager from '@ohos.resourceschedule.backgroundTaskManager'
 import { WantAgent } from '@ohos.wantAgent';
 import { wantAgent } from '@kit.AbilityKit';
 
-
-enum dataTypes {SCHEDULE}
 
 export default class FileHandler{
 
@@ -35,7 +34,7 @@ export default class FileHandler{
           pixelMap.release();
           fileIo.closeSync(file);
           console.log("OCR结果：",result.value);
-          return await this.requestAI(result.value,dataTypes.SCHEDULE);
+          return await this.requestAI(result.value);
         });
       return (await Promise.all(tasks)).flat();
       }catch (err){
@@ -45,7 +44,7 @@ export default class FileHandler{
       }
     }
 
-    private static async requestAI(message: string, type: dataTypes):Promise<any>{
+    private static async requestAI(message: string):Promise<any>{
       let id:number;
       let delayInfo:backgroundTaskManager.DelaySuspendInfo;
       try {
@@ -64,37 +63,18 @@ export default class FileHandler{
         console.error('Failed to start background task:', err);
       }
       const httpRequest = http.createHttp();
-      let prompt: string="";
-      switch (type){
-        case dataTypes.SCHEDULE:
-          prompt=Prompts.schedule();
-          break;
-      }
+      const settings = LLMSettingsService.getInstance().get();
 
       try{
         const response = await httpRequest.request(
-          API_CONFIG.baseUrl,
+          settings.baseUrl,
           {
             method:http.RequestMethod.POST,
             header: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${API_CONFIG.apiKey}`
+              "Authorization": `Bearer ${settings.apiKey}`
             },
-          extraData: JSON.stringify({
-            messages:[
-              {
-              role: "system",
-              content: prompt
-              },
-              {
-                role: "user",
-                content:message
-              }],
-            thinking:{"type":"enabled"},
-            reasoning_effort: "high",
-            model:API_CONFIG.model,
-            response_format:{'type': 'json_object'},
-          })
+          extraData: buildRequestBody(settings, message)
           }
         );
         console.info("API返回HTTP Code：",response.responseCode);
