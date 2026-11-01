@@ -1,10 +1,17 @@
-import { BottomBuilderShowType, HdsNavigation, HdsNavigationAttribute, HideMode } from '@kit.UIDesignKit';
 import { ScheduleEvent } from '../../data_types/ScheduleEvent';
 import { ScheduleJson } from '../../data_types/ScheduleJson';
 import { ScheduleItem } from './ScheduleItem';
 import { ScheduleItemEditor } from './ScheduleItemEditor';
 import { LlmInputSheet } from './LlmInputSheet';
 import { SwipeActionCard } from '../../components/SwipeActionCard';
+import {
+  TITLE_BAR_HEIGHT_WITH_SUBTITLE,
+  TITLE_ACTION_HEIGHT,
+  TITLE_ACTION_MARGIN_TOP_WITH_SUBTITLE,
+  TITLE_ACTION_MARGIN_RIGHT,
+  getTitleActionTranslateY
+} from '../../components/TitleBarMetrics';
+import { HdsNavigation, HdsNavigationAttribute } from '@kit.UIDesignKit';
 
 // 首页：展示日程列表
 @Component
@@ -14,11 +21,8 @@ export struct HomePage {
   @State isShowLlmInput: boolean = false;
   @State isShowEditSheet: boolean = false;
   @State editingItem: ScheduleEvent = new ScheduleEvent();
+  @State headerScroll: number = 0;
   itemsScroller: Scroller = new Scroller()
-
-  @Builder
-  BottomBuilder() {
-  }
 
   // 输入描述让大模型生成日程的弹层
   @Builder
@@ -90,92 +94,95 @@ export struct HomePage {
   }
 
   build() {
-    Stack({ alignContent: Alignment.Bottom }) {
-      Column({ space: 10 }) {
-        HdsNavigation() { // 创建HdsNavigation组件
-          List({ space: 12, scroller: this.itemsScroller }) {
-            // 无日程时在列表顶部显示空状态提示
-            if (this.items.length === 0) {
-              ListItem() {
-                Text('Nothing yet~')
-                  .width('100%')
-                  .fontSize(16)
-                  .fontColor(Color.Gray)
-                  .textAlign(TextAlign.Center)
-                  .margin({ top: 0 })
-              }
-            }
+    Stack({ alignContent: Alignment.TopEnd }) {
+      HdsNavigation() {
+        List({ space: 12, scroller: this.itemsScroller }) {
+          // 顶部留出 HDS 标题栏的高度，滚动时这块空白会滑到标题栏下面
+          ListItem() {
+            Column().height(TITLE_BAR_HEIGHT_WITH_SUBTITLE)
+          }
 
-            ForEach(this.items, (item: ScheduleEvent) => {
-              ListItem() {
-                SwipeActionCard({
-                  onDelete: () => {
-                    this.requestDelete(item)
-                  },
-                  onEdit: () => {
-                    this.openEditor(item)
-                  }
-                }) {
-                  ScheduleItem({
-                    item: item,
-                    onDelete: () => {
-                      this.removeItem(item)
-                    }
-                  })
+          // 无日程时在列表顶部显示空状态提示
+          if (this.items.length === 0) {
+            ListItem() {
+              Text('Nothing yet~')
+                .width('100%')
+                .fontSize(16)
+                .fontColor(Color.Gray)
+                .textAlign(TextAlign.Center)
+                .margin({ top: 20 })
+            }
+          }
+
+          ForEach(this.items, (item: ScheduleEvent) => {
+            ListItem() {
+              SwipeActionCard({
+                onDelete: () => {
+                  this.requestDelete(item)
+                },
+                onEdit: () => {
+                  this.openEditor(item)
                 }
+              }) {
+                ScheduleItem({
+                  item: item,
+                  onDelete: () => {
+                    this.removeItem(item)
+                  }
+                })
               }
-            }, (item: ScheduleEvent) => item.id)
-
-          }
-          .width('90%')
-          .height('100%')
-          .padding({ top: 160, bottom: 120 })
-          .edgeEffect(EdgeEffect.Spring)
-          .scrollBar(BarState.Off)
-          .bindSheet(this.isShowEditSheet, this.EditorSheet(), {
-            detents: [SheetSize.MEDIUM, SheetSize.LARGE],
-            preferType: SheetType.BOTTOM,
-            title: { title: `编辑 ${this.editingItem.title}` },
-            onDisappear: () => {
-              this.isShowEditSheet = false
             }
-          })
-
-        }.titleBar({
-          content: {
-            title: { mainTitle: 'Pillendar', subTitle: this.subtitle },
-
-            // 设置HdsNavigation BottomBuilder区域，包括设置高度，显示类型
-            bottomBuilder: {
-              builder: (): void => this.BottomBuilder(),
-              height: 0,
-              showType: BottomBuilderShowType.DIRECTLY_SHOW
-            },
-
+          }, (item: ScheduleEvent) => item.id)
+        }
+        .width('100%')
+        .height('100%')
+        .padding({ left: '5%', right: '5%' })
+        .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
+        .scrollBar(BarState.Off)
+        // 记录滚动偏移，让标题栏按钮跟着标题一起上移
+        .onDidScroll(() => {
+          this.headerScroll = this.itemsScroller.currentOffset().yOffset
+        })
+        .bindSheet(this.isShowEditSheet, this.EditorSheet(), {
+          detents: [SheetSize.MEDIUM, SheetSize.LARGE],
+          preferType: SheetType.BOTTOM,
+          title: { title: `编辑 ${this.editingItem.title}` },
+          onDisappear: () => {
+            this.isShowEditSheet = false
           }
         })
-
-        // 设置HdsNavigation标题栏动态显隐，包括设置标题区域，bottomBuilder区域，状态栏区域是否动态隐藏，隐藏模式以及开始隐藏时内容区的滚动距离。
-        .dynamicHideTitleBar({
-          hideTitleArea: true,
-          hideBottomBuilder: true,
-          hideStatusBar: false,
-          mode: HideMode.SCROLL_UP_TO_BLEND_SCROLL_UP,
-          hideOffset: 0
-        })
-        .height('100%')
-        .bindToScrollable([this.itemsScroller]);
-
       }
+      .titleBar({
+        content: {
+          title: {
+            mainTitle: 'Pillendar',
+            subTitle: this.subtitle
+          }
+        }
+      })
+      .dynamicHideTitleBar({
+        hideTitleArea: false
+      })
+      .bindToScrollable([this.itemsScroller])
+      .width('100%')
+      .height('100%')
+      .bindSheet(this.isShowLlmInput, this.LlmInputSheetBuilder(), {
+        detents: [320],
+        preferType: SheetType.BOTTOM,
+        onDisappear: () => {
+          this.isShowLlmInput = false
+        }
+      })
 
-      // 底部导航栏上方居中的新建按钮，点击后在按钮旁弹出选项菜单
-      Button('+', { type: ButtonType.Circle })
-        .width(60)
-        .height(60)
-        .fontSize(32)
+      // 标题右上角的新建按钮，和标题文字垂直对齐
+      Button('+', { type: ButtonType.Capsule })
+        .width(1.5 * TITLE_ACTION_HEIGHT)
+        .height(TITLE_ACTION_HEIGHT)
+        .fontSize(24)
         .fontColor(Color.White)
         .backgroundColor('#007DFF')
-        .margin({ bottom: 16 })
+        .margin({ top: TITLE_ACTION_MARGIN_TOP_WITH_SUBTITLE, right: TITLE_ACTION_MARGIN_RIGHT })
+        .translate({ y: getTitleActionTranslateY(this.headerScroll, TITLE_ACTION_MARGIN_TOP_WITH_SUBTITLE) })
         .bindMenu([
           {
             value: '模板日程',
@@ -193,12 +200,5 @@ export struct HomePage {
     }
     .width('100%')
     .height('100%')
-    .bindSheet(this.isShowLlmInput, this.LlmInputSheetBuilder(), {
-      detents: [320],
-      preferType: SheetType.BOTTOM,
-      onDisappear: () => {
-        this.isShowLlmInput = false
-      }
-    })
   }
 }

@@ -8,8 +8,11 @@ import { ScheduleTypeSwitch } from '../home/ScheduleTypeSwitch';
 import { ScheduleItemEditor } from '../home/ScheduleItemEditor';
 import { parseToDate } from '../home/ScheduleDateUtils';
 import { SwipeActionCard } from '../../components/SwipeActionCard';
+import { TITLE_BAR_HEIGHT_FREE, TITLE_ACTION_HEIGHT, TITLE_ACTION_MARGIN_TOP_FREE,
+  TITLE_ACTION_MARGIN_RIGHT, getTitleActionTranslateY } from '../../components/TitleBarMetrics';
+import { HdsNavigation, HdsNavigationAttribute } from '@kit.UIDesignKit';
 
-// 日程筛选模式
+// 筛选模式
 const FILTER_ALL: string = 'all';
 const FILTER_ACTIVE: string = 'active';
 const FILTER_EXPIRED: string = 'expired';
@@ -34,8 +37,10 @@ export struct SchedulePage {
   @State refreshToken: number = 0;
   @State isShowEditSheet: boolean = false;
   @State editingEvent: ScheduleEvent = new ScheduleEvent();
+  @State headerScroll: number = 0;
   private editingEventId: number = 0;
   private refreshTimer: number = -1;
+  private schedulesScroller: Scroller = new Scroller();
 
   aboutToAppear(): void {
     this.loadSchedules();
@@ -196,53 +201,14 @@ export struct SchedulePage {
   }
 
   build() {
-    Column() {
-      // 标题栏
-      Row() {
-        Text('日程')
-          .fontSize(24)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(Color.White)
-        Blank()
-        Button({ type: ButtonType.Capsule }) {
-          Row({ space: 4 }) {
-            Text(this.getFilterLabel())
-              .fontSize(14)
-              .fontColor(Color.Gray)
-            SymbolGlyph($r('sys.symbol.chevron_down'))
-              .fontSize(16)
-              .fontColor([Color.Gray])
-          }
-          .justifyContent(FlexAlign.Center)
+    Stack({ alignContent: Alignment.TopEnd }) {
+      HdsNavigation() {
+      List({ space: 12, scroller: this.schedulesScroller }) {
+        // 顶部留出 HDS 标题栏的高度，滚动时这块空白会滑到标题栏下面
+        ListItem() {
+          Column().height(TITLE_BAR_HEIGHT_FREE)
         }
-        .height(32)
-        .padding({ left: 16, right: 16 })
-        .backgroundColor('#1C1C1C')
-        .bindMenu([
-          {
-            value: '全部',
-            action: () => {
-              this.filterMode = FILTER_ALL;
-            }
-          },
-          {
-            value: '活跃',
-            action: () => {
-              this.filterMode = FILTER_ACTIVE;
-            }
-          },
-          {
-            value: '已过期',
-            action: () => {
-              this.filterMode = FILTER_EXPIRED;
-            }
-          }
-        ])
-      }
-      .width('90%')
-      .padding({ top: 24, bottom: 16 })
 
-      List({ space: 12 }) {
         if (this.getVisibleSchedules().length === 0) {
           ListItem() {
             Text('Nothing yet~')
@@ -311,9 +277,13 @@ export struct SchedulePage {
         Date.now()}`)
       }
       .width('100%')
-      .layoutWeight(1)
-      .padding({ left: '5%', right: '5%', bottom: 24 })
-      .edgeEffect(EdgeEffect.Spring)
+      .height('100%')
+      .padding({ left: '5%', right: '5%' })
+      .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
+      // 记录滚动偏移，让标题栏按钮跟着标题一起上移
+      .onDidScroll(() => {
+        this.headerScroll = this.schedulesScroller.currentOffset().yOffset
+      })
       .bindSheet(this.isShowEditSheet, this.EditorSheet(), {
         detents: [SheetSize.MEDIUM, SheetSize.LARGE],
         preferType: SheetType.BOTTOM,
@@ -323,6 +293,58 @@ export struct SchedulePage {
           this.saveScheduleEdit()
         }
       })
+    }
+      .titleBar({
+        content: {
+          title: {
+            mainTitle: '日程'
+          }
+        }
+      })
+      .dynamicHideTitleBar({
+        hideTitleArea: false
+      })
+      .bindToScrollable([this.schedulesScroller])
+      .width('100%')
+      .height('100%')
+
+      // 标题右上角的筛选按钮，和标题文字垂直对齐
+      Button({ type: ButtonType.Capsule }) {
+        Row({ space: 4 }) {
+          Text(this.getFilterLabel())
+            .fontSize(14)
+            .fontColor(Color.Gray)
+          SymbolGlyph($r('sys.symbol.chevron_down'))
+            .fontSize(16)
+            .fontColor([Color.Gray])
+        }
+        .justifyContent(FlexAlign.Center)
+      }
+      .height(TITLE_ACTION_HEIGHT)
+      .padding({ left: 14, right: 14 })
+      .backgroundColor('#1C1C1C')
+      .margin({ top: TITLE_ACTION_MARGIN_TOP_FREE, right: TITLE_ACTION_MARGIN_RIGHT })
+      .translate({ y: getTitleActionTranslateY(this.headerScroll, TITLE_ACTION_MARGIN_TOP_FREE) })
+      .bindMenu([
+        {
+          value: '全部',
+          action: () => {
+            this.filterMode = FILTER_ALL
+          }
+        },
+        {
+          value: '活跃',
+          action: () => {
+            this.filterMode = FILTER_ACTIVE
+          }
+        },
+        {
+          value: '已过期',
+          action: () => {
+            this.filterMode = FILTER_EXPIRED
+          }
+        }
+      ])
     }
     .width('100%')
     .height('100%')

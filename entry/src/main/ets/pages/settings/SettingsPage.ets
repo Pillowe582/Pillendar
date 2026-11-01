@@ -3,6 +3,9 @@ import { DEFAULT_LLM_SETTINGS, isRequestJsonValid } from '../../file_handler/LLM
 import { LLMSettings } from '../../data_types/LLMSettings';
 import { LLMSettingsService } from '../../services/LLMSettingsService';
 import { LLMService } from '../../services/LLMService';
+import { TITLE_BAR_HEIGHT_FREE, TITLE_ACTION_HEIGHT, TITLE_ACTION_MARGIN_TOP_FREE,
+  TITLE_ACTION_MARGIN_RIGHT, getTitleActionTranslateY } from '../../components/TitleBarMetrics';
+import { HdsNavigation, HdsNavigationAttribute } from '@kit.UIDesignKit';
 
 // 设置页：大模型接口参数收在可展开的 section 中，保存按钮在标题栏，恢复默认在列表底部
 @Component
@@ -14,6 +17,8 @@ export struct SettingsPage {
   @State prompt: string = DEFAULT_LLM_SETTINGS.prompt;
   @State requestJson: string = DEFAULT_LLM_SETTINGS.requestJson;
   @State apiExpanded: boolean = false;
+  @State headerScroll: number = 0;
+  private settingsScroller: Scroller = new Scroller();
 
   aboutToAppear(): void {
     this.loadSettings();
@@ -107,26 +112,14 @@ export struct SettingsPage {
   }
 
   build() {
-    Column() {
-      // 标题栏：左侧标题，右侧保存按钮
-      Row() {
-        Text('设置')
-          .fontSize(24)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(Color.White)
-        Blank()
-        Button('保存')
-          .height(36)
-          .fontSize(15)
-          .backgroundColor('#007DFF')
-          .onClick(() => {
-            this.saveSettings();
-          })
-      }
-      .width('90%')
-      .padding({ top: 24, bottom: 16 })
+    Stack({ alignContent: Alignment.TopEnd }) {
+      HdsNavigation() {
+      List({ space: 18, scroller: this.settingsScroller }) {
+        // 顶部留出 HDS 标题栏的高度，滚动时这块空白会滑到标题栏下面
+        ListItem() {
+          Column().height(TITLE_BAR_HEIGHT_FREE)
+        }
 
-      List({ space: 18 }) {
         // 大模型 API 设置 section，点击标题展开或收起
         ListItem() {
           Column() {
@@ -326,9 +319,41 @@ export struct SettingsPage {
         }
       }
       .width('100%')
-      .layoutWeight(1)
-      .padding({ left: '5%', right: '5%', bottom: 24 })
-      .edgeEffect(EdgeEffect.Spring)
+      .height('100%')
+      .padding({ left: '5%', right: '5%' })
+      .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
+      // 记录滚动偏移，让标题栏按钮跟着标题一起上移
+      .onDidScroll(() => {
+        this.headerScroll = this.settingsScroller.currentOffset().yOffset
+      })
+    }
+      .titleBar({
+        content: {
+          title: {
+            mainTitle: '设置'
+          }
+        }
+      })
+      .dynamicHideTitleBar({
+        hideTitleArea: false
+      })
+      .bindToScrollable([this.settingsScroller])
+      .width('100%')
+      .height('100%')
+
+      // 标题右上角的保存按钮，和标题文字垂直对齐
+      Button('保存')
+        .height(TITLE_ACTION_HEIGHT)
+        .fontSize(14)
+        .fontColor(Color.White)
+        .backgroundColor('#007DFF')
+        .borderRadius(TITLE_ACTION_HEIGHT / 2)
+        .padding({ left: 16, right: 16 })
+        .margin({ top: TITLE_ACTION_MARGIN_TOP_FREE, right: TITLE_ACTION_MARGIN_RIGHT })
+        .translate({ y: getTitleActionTranslateY(this.headerScroll, TITLE_ACTION_MARGIN_TOP_FREE) })
+        .onClick(() => {
+          this.saveSettings();
+        })
     }
     .width('100%')
     .height('100%')
