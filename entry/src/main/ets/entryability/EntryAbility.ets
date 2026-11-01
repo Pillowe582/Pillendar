@@ -18,6 +18,7 @@ import { ScheduleJson } from '../data_types/ScheduleJson'
 import { CalendarService } from '../services/CalendarService';
 import { LLMSettingsService } from '../services/LLMSettingsService';
 import { TodoService } from '../services/TodoService';
+import { TodoWidgetService } from '../services/TodoWidgetService';
 import { notificationManager } from '@kit.NotificationKit';
 
 const permissions: Array<Permissions> = [
@@ -107,6 +108,11 @@ export default class EntryAbility extends UIAbility {
     await CalendarService.getInstance().init(this.context)
     await LLMSettingsService.getInstance().init(this.context)
     await TodoService.getInstance().init(this.context)
+    await TodoWidgetService.getInstance().init(this.context)
+    // 桌面卡片的 + 号通过 router 拉起应用，记录一次性新建菜单请求
+    if (String(want.parameters?.['showCreateMenu']) === 'true') {
+      AppStorage.setOrCreate('showCreateMenu', true);
+    }
 
     console.info('被拉起原因：' + launchParam.launchReasonMessage);
     if (launchParam.launchReasonMessage === 'ReasonMessage_SystemShare') {
@@ -155,6 +161,8 @@ export default class EntryAbility extends UIAbility {
   onForeground(): void {
     // Ability has brought to foreground
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onForeground');
+    // 回到前台时把最新的待办数据推给桌面卡片
+    TodoWidgetService.getInstance().updateAllForms();
   }
 
   onBackground(): void {
@@ -164,6 +172,10 @@ export default class EntryAbility extends UIAbility {
 
   async onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     console.info('被拉起原因：' + launchParam.launchReasonMessage);
+    // 桌面卡片的 + 号通过 router 拉起应用，记录一次性新建菜单请求
+    if (String(want.parameters?.['showCreateMenu']) === 'true') {
+      AppStorage.setOrCreate('showCreateMenu', true);
+    }
     if (launchParam.launchReasonMessage === 'ReasonMessage_SystemShare') {
       AppStorage.setOrCreate('subtitle', 'Requesting LLM...');
       // 识别为被系统分享拉起

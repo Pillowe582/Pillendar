@@ -1,6 +1,7 @@
 import { ScheduleEvent } from '../../data_types/ScheduleEvent';
 import { addScheduleToCalendar } from './ScheduleCalendarHelper';
 import { TodoService } from '../../services/TodoService';
+import { TodoWidgetService } from '../../services/TodoWidgetService';
 
 // 日程卡片的操作行：确认写入日历
 @Component
@@ -20,6 +21,8 @@ export struct ScheduleItemActions {
             .then(async (eventId: number) => {
               // 记录这条日程是日程还是待办
               await TodoService.getInstance().setDdl(eventId, this.item.ddl);
+              // 新日程入日历后同步刷新桌面卡片
+              await TodoWidgetService.getInstance().updateAllForms();
               this.getUIContext().getPromptAction().showToast({ message: '已添加到日历' });
               this.onDelete();
             })

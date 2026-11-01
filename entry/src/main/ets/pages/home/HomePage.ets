@@ -17,12 +17,73 @@ import { HdsNavigation, HdsNavigationAttribute } from '@kit.UIDesignKit';
 @Component
 export struct HomePage {
   @StorageProp('subtitle') subtitle: string = "Strange";
+  @StorageProp('showCreateMenu') @Watch('onShowCreateMenuChange') isRequestCreateMenu: boolean = false;
   @StorageLink('mainItems') items: Array<ScheduleEvent> = [];
   @State isShowLlmInput: boolean = false;
+  @State isShowCreateMenu: boolean = false;
   @State isShowEditSheet: boolean = false;
   @State editingItem: ScheduleEvent = new ScheduleEvent();
   @State headerScroll: number = 0;
   itemsScroller: Scroller = new Scroller()
+
+  aboutToAppear(): void {
+    this.consumeCreateMenuRequest()
+  }
+
+  // 桌面卡片的 + 号拉起应用后，展开首页的新建菜单
+  onShowCreateMenuChange(): void {
+    this.consumeCreateMenuRequest()
+  }
+
+  // 消费一次性新建菜单请求
+  private consumeCreateMenuRequest(): void {
+    if (!this.isRequestCreateMenu) {
+      return
+    }
+    this.isShowCreateMenu = true
+    AppStorage.setOrCreate('showCreateMenu', false)
+  }
+
+  // 新建菜单内容，供 + 号按钮弹出
+  @Builder
+  CreateMenuBuilder() {
+    Column() {
+      Text('模板日程')
+        .width('100%')
+        .fontSize(16)
+        .fontColor(Color.White)
+        .padding({
+          left: 24,
+          right: 24,
+          top: 18,
+          bottom: 18
+        })
+        .onClick(() => {
+          this.isShowCreateMenu = false
+          this.createTemplateSchedule()
+        })
+      Divider()
+        .strokeWidth(0.5)
+        .color('#3A3A3A')
+      Text('问问神奇的大模型')
+        .width('100%')
+        .fontSize(16)
+        .fontColor(Color.White)
+        .padding({
+          left: 24,
+          right: 24,
+          top: 18,
+          bottom: 18
+        })
+        .onClick(() => {
+          this.isShowCreateMenu = false
+          this.isShowLlmInput = true
+        })
+    }
+    .width(180)
+    .backgroundColor('#1C1C1C')
+    .borderRadius(12)
+  }
 
   // 输入描述让大模型生成日程的弹层
   @Builder
@@ -183,20 +244,41 @@ export struct HomePage {
         .backgroundColor('#007DFF')
         .margin({ top: TITLE_ACTION_MARGIN_TOP_WITH_SUBTITLE, right: TITLE_ACTION_MARGIN_RIGHT })
         .translate({ y: getTitleActionTranslateY(this.headerScroll, TITLE_ACTION_MARGIN_TOP_WITH_SUBTITLE) })
-        .bindMenu([
-          {
-            value: '模板日程',
-            action: () => {
-              this.createTemplateSchedule()
-            }
+        .onClick(() => {
+          this.isShowCreateMenu = !this.isShowCreateMenu
+        })
+        .bindPopup(this.isShowCreateMenu, {
+          builder: () => {
+            this.CreateMenuBuilder()
           },
-          {
-            value: '问问神奇的大模型',
-            action: () => {
-              this.isShowLlmInput = true
+          placement: Placement.BottomRight,
+          popupColor: '#1C1C1C',
+          enableArrow: false,
+          // 从右上角锚点缩放展开、反向缩放淡出收起，贴近系统菜单动画
+          transition: TransitionEffect.asymmetric(
+            TransitionEffect.OPACITY
+              .combine(TransitionEffect.scale({
+                x: 0.5,
+                y: 0.5,
+                centerX: '100%',
+                centerY: '20%'
+              }))
+              .animation({ duration: 160, curve: Curve.Friction }),
+            TransitionEffect.OPACITY
+              .combine(TransitionEffect.scale({
+                x: 0.5,
+                y: 0.5,
+                centerX: '100%',
+                centerY: '20%'
+              }))
+              .animation({ duration: 160, curve: Curve.Friction })
+          ),
+          onStateChange: (event: PopupStateChangeParam) => {
+            if (!event.isVisible) {
+              this.isShowCreateMenu = false
             }
           }
-        ])
+        })
     }
     .width('100%')
     .height('100%')

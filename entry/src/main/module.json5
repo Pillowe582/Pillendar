@@ -16,7 +16,8 @@
         "reason": "$string:reason",
         "usedScene": {
           "abilities": [
-            "EntryAbility"
+            "EntryAbility",
+            "EntryFormAbility"
           ],
           "when": "always"
         }
@@ -53,7 +54,8 @@
         "reason": "$string:reason",
         "usedScene": {
           "abilities": [
-            "EntryAbility"
+            "EntryAbility",
+            "EntryFormAbility"
           ],
           "when": "always"
         }
@@ -111,6 +113,20 @@
             "resource": "$profile:backup_config"
           }
         ],
+      },
+      {
+        "name": "EntryFormAbility",
+        "srcEntry": "./ets/entryformability/EntryFormAbility.ets",
+        "label": "$string:widget_todo_display_name",
+        "description": "$string:widget_todo_desc",
+        "type": "form",
+        "exported": false,
+        "metadata": [
+          {
+            "name": "ohos.extension.form",
+            "resource": "$profile:form_config"
+          }
+        ]
       }
     ]
   }

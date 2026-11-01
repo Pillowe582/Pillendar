@@ -31,9 +31,18 @@ struct Index {
   @State selectedFontColor: string = '#007DFF';
   @State selectedIndex: number = 0;
   @State currentIndex: number = 0;
+  @StorageProp('showCreateMenu') @Watch('onShowCreateMenuChange') isRequestCreateMenu: boolean = false;
+
+  // 桌面卡片的 + 号拉起应用后，切回首页并弹出新建菜单
+  onShowCreateMenuChange(): void {
+    if (this.isRequestCreateMenu) {
+      this.currentIndex = 0
+      this.selectedIndex = 0
+    }
+  }
 
   build() {
-    Tabs({ barPosition: BarPosition.End }) {
+    Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
       TabContent() {
         HomePage()
       }

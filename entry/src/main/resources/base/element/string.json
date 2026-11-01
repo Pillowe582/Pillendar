@@ -15,6 +15,14 @@
     {
       "name": "reason",
       "value": "获取日程信息"
+    },
+    {
+      "name": "widget_todo_display_name",
+      "value": "Pillendar 待办"
+    },
+    {
+      "name": "widget_todo_desc",
+      "value": "显示待完成的待办事项"
     }
   ]
 }

@@ -2,6 +2,7 @@ import { common } from '@kit.AbilityKit';
 import { calendarManager } from '@kit.CalendarKit';
 import { CalendarService } from '../../services/CalendarService';
 import { TodoService } from '../../services/TodoService';
+import { TodoWidgetService } from '../../services/TodoWidgetService';
 import { Prompts } from '../../file_handler/LLMConfig';
 import { ScheduleEvent } from '../../data_types/ScheduleEvent';
 import { ScheduleTypeSwitch } from '../home/ScheduleTypeSwitch';
@@ -101,6 +102,8 @@ export struct SchedulePage {
   private async changeDdl(card: ScheduleCard, ddl: boolean): Promise<void> {
     card.ddl = ddl;
     await TodoService.getInstance().setDdl(card.id, ddl);
+    // 待办状态变化后同步刷新桌面卡片
+    await TodoWidgetService.getInstance().updateAllForms();
     // 类型改变后排序键变化，重新排序并刷新界面
     const cards = this.schedules.slice();
     cards.sort((left: ScheduleCard, right: ScheduleCard) => this.getSortTime(left) - this.getSortTime(right));
@@ -174,6 +177,8 @@ export struct SchedulePage {
       reminderTime: [30]
     };
     await calendar.updateEvent(event);
+    // 编辑后同步刷新桌面卡片
+    await TodoWidgetService.getInstance().updateAllForms();
     await this.loadSchedules();
   }
 
@@ -196,6 +201,8 @@ export struct SchedulePage {
     }
     await calendar.deleteEvent(card.id);
     await TodoService.getInstance().setDdl(card.id, false);
+    // 删除后同步刷新桌面卡片
+    await TodoWidgetService.getInstance().updateAllForms();
     this.getUIContext().getPromptAction().showToast({ message: '已删除' });
     await this.loadSchedules();
   }
