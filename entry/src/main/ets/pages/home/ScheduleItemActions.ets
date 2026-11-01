@@ -2,6 +2,7 @@ import { ScheduleEvent } from '../../data_types/ScheduleEvent';
 import { DeleteScheduleButton } from './DeleteScheduleButton';
 import { ScheduleItemEditor } from './ScheduleItemEditor';
 import { addScheduleToCalendar } from './ScheduleCalendarHelper';
+import { TodoService } from '../../services/TodoService';
 
 // 日程卡片的操作行：删除 / 编辑（含编辑弹层）/ 确认写入日历
 @Component
@@ -47,7 +48,10 @@ export struct ScheduleItemActions {
         .backgroundColor(Color.Green)
         .onClick(() => {
           addScheduleToCalendar(this.item)
-            .then(() => {
+            .then(async (eventId: number) => {
+              // 按设置项决定这条日程是否默认出现在待办中
+              const todoService = TodoService.getInstance();
+              await todoService.setShownInTodo(eventId, todoService.getDefaultShowInTodo());
               this.getUIContext().getPromptAction().showToast({ message: '已添加到日历' });
               this.onDelete();
             })

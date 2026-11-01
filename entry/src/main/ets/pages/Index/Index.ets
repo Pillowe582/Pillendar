@@ -1,6 +1,7 @@
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 import { HomePage } from '../home/HomePage';
+import { SchedulePage } from '../schedule/SchedulePage';
 import { SettingsPage } from '../settings/SettingsPage';
 
 const DOMAIN = 0x0001;
@@ -39,9 +40,14 @@ struct Index {
       .tabBar(this.tabBuilder(0, '首页'))
 
       TabContent() {
+        SchedulePage({ currentTabIndex: this.selectedIndex })
+      }
+      .tabBar(this.tabBuilder(1, '日程'))
+
+      TabContent() {
         SettingsPage()
       }
-      .tabBar(this.tabBuilder(1, '设置'))
+      .tabBar(this.tabBuilder(2, '设置'))
     }
     .width('100%')
     .height('100%')

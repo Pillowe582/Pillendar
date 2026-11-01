@@ -17,6 +17,7 @@ import { ScheduleEvent } from '../data_types/ScheduleEvent'
 import { ScheduleJson } from '../data_types/ScheduleJson'
 import { CalendarService } from '../services/CalendarService';
 import { LLMSettingsService } from '../services/LLMSettingsService';
+import { TodoService } from '../services/TodoService';
 import { notificationManager } from '@kit.NotificationKit';
 
 const permissions: Array<Permissions> = [
@@ -105,6 +106,7 @@ export default class EntryAbility extends UIAbility {
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
     await CalendarService.getInstance().init(this.context)
     await LLMSettingsService.getInstance().init(this.context)
+    await TodoService.getInstance().init(this.context)
 
     console.info('被拉起原因：' + launchParam.launchReasonMessage);
     if (launchParam.launchReasonMessage === 'ReasonMessage_SystemShare') {
