@@ -2,7 +2,9 @@ import { BottomBuilderShowType, HdsNavigation, HdsNavigationAttribute, HideMode 
 import { ScheduleEvent } from '../../data_types/ScheduleEvent';
 import { ScheduleJson } from '../../data_types/ScheduleJson';
 import { ScheduleItem } from './ScheduleItem';
+import { ScheduleItemEditor } from './ScheduleItemEditor';
 import { LlmInputSheet } from './LlmInputSheet';
+import { SwipeActionCard } from '../../components/SwipeActionCard';
 
 // 首页：展示日程列表
 @Component
@@ -10,6 +12,8 @@ export struct HomePage {
   @StorageProp('subtitle') subtitle: string = "Strange";
   @StorageLink('mainItems') items: Array<ScheduleEvent> = [];
   @State isShowLlmInput: boolean = false;
+  @State isShowEditSheet: boolean = false;
+  @State editingItem: ScheduleEvent = new ScheduleEvent();
   itemsScroller: Scroller = new Scroller()
 
   @Builder
@@ -24,6 +28,12 @@ export struct HomePage {
         this.insertGeneratedSchedules(schedules)
       }
     })
+  }
+
+  // 卡片编辑弹层
+  @Builder
+  EditorSheet() {
+    ScheduleItemEditor({ item: this.editingItem })
   }
 
   /**
@@ -48,51 +58,88 @@ export struct HomePage {
     this.getUIContext().getPromptAction().showToast({ message: `已生成 ${newEvents.length} 条日程` })
   }
 
+  // 打开卡片编辑弹层
+  private openEditor(item: ScheduleEvent): void {
+    this.editingItem = item
+    this.isShowEditSheet = true
+  }
+
+  // 从首页列表移除一条日程
+  private removeItem(item: ScheduleEvent): void {
+    const targetIndex = this.items.findIndex((event: ScheduleEvent) => event.id === item.id)
+    if (targetIndex < 0) {
+      return
+    }
+    this.items.splice(targetIndex, 1)
+  }
+
+  // 右滑删除：确认后从列表移除
+  private async requestDelete(item: ScheduleEvent): Promise<void> {
+    const response = await this.getUIContext().getPromptAction().showDialog({
+      title: '！？删除？！',
+      message: '将会永久失去这一项（真的很久！）',
+      buttons: [
+        { text: '取消', color: '#808080' },
+        { text: '删吧', color: '#FF5B5B' }
+      ]
+    });
+    if (response.index !== 1) {
+      return
+    }
+    this.removeItem(item)
+  }
+
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
       Column({ space: 10 }) {
         HdsNavigation() { // 创建HdsNavigation组件
-          Scroll(this.itemsScroller) {
-            Column() {
-              Blank().height('20%').width('100%')
-
-              // 无日程时在列表顶部显示空状态提示
-              if (this.items.length === 0) {
+          List({ space: 12, scroller: this.itemsScroller }) {
+            // 无日程时在列表顶部显示空状态提示
+            if (this.items.length === 0) {
+              ListItem() {
                 Text('Nothing yet~')
-                  .width('90%')
+                  .width('100%')
                   .fontSize(16)
                   .fontColor(Color.Gray)
                   .textAlign(TextAlign.Center)
+                  .margin({ top: 0 })
               }
-
-              Grid() {
-
-                ForEach(this.items, (item: ScheduleEvent) => {
-
-                  GridItem() {
-                    ScheduleItem({
-                      item: item,
-                      onDelete: () => {
-                        const targetIndex = this.items.findIndex((event: ScheduleEvent) => event.id === item.id)
-                        if (targetIndex < 0) {
-                          return
-                        }
-                        this.items.splice(targetIndex, 1)
-                      }
-                    });
-                  }
-                  .margin({ bottom: 12 })
-                }, (item: ScheduleEvent) => item.id)
-
-              }
-
-              .height('auto')
-              .width('90%')
-
-              Blank().height('50%').width('100%')
             }
+
+            ForEach(this.items, (item: ScheduleEvent) => {
+              ListItem() {
+                SwipeActionCard({
+                  onDelete: () => {
+                    this.requestDelete(item)
+                  },
+                  onEdit: () => {
+                    this.openEditor(item)
+                  }
+                }) {
+                  ScheduleItem({
+                    item: item,
+                    onDelete: () => {
+                      this.removeItem(item)
+                    }
+                  })
+                }
+              }
+            }, (item: ScheduleEvent) => item.id)
+
           }
+          .width('90%')
+          .height('100%')
+          .padding({ top: 160, bottom: 120 })
           .edgeEffect(EdgeEffect.Spring)
+          .scrollBar(BarState.Off)
+          .bindSheet(this.isShowEditSheet, this.EditorSheet(), {
+            detents: [SheetSize.MEDIUM, SheetSize.LARGE],
+            preferType: SheetType.BOTTOM,
+            title: { title: `编辑 ${this.editingItem.title}` },
+            onDisappear: () => {
+              this.isShowEditSheet = false
+            }
+          })
 
         }.titleBar({
           content: {

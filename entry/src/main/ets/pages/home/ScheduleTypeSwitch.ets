@@ -32,7 +32,7 @@ export struct ScheduleTypeSwitch {
     .alignItems(VerticalAlign.Center)
     .padding(3)
     .backgroundColor('#1C1C1C')
-    .borderRadius(13)
+    .borderRadius(25)
     .onClick(() => {
       this.onToggle(!this.ddl);
     })

@@ -51,6 +51,8 @@ struct Index {
     }
     .width('100%')
     .height('100%')
+    // 关闭左右滑动切页，避免和卡片自身的滑动操作抢手势
+    .scrollable(false)
     .animationMode(AnimationMode.ACTION_FIRST)
     .onChange((index: number) => {
       console.info('onChange: ' + index)

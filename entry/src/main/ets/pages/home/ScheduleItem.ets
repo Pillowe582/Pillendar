@@ -81,7 +81,6 @@ export struct ScheduleItem {
       .width('100%')
       .padding(16)
       .backgroundColor('#303030')
-      .borderRadius(16)
       .shadow(ShadowStyle.OUTER_DEFAULT_XS)
     }
   }

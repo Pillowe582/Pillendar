@@ -3,7 +3,11 @@ import { calendarManager } from '@kit.CalendarKit';
 import { CalendarService } from '../../services/CalendarService';
 import { TodoService } from '../../services/TodoService';
 import { Prompts } from '../../file_handler/LLMConfig';
+import { ScheduleEvent } from '../../data_types/ScheduleEvent';
 import { ScheduleTypeSwitch } from '../home/ScheduleTypeSwitch';
+import { ScheduleItemEditor } from '../home/ScheduleItemEditor';
+import { parseToDate } from '../home/ScheduleDateUtils';
+import { SwipeActionCard } from '../../components/SwipeActionCard';
 
 // 日程筛选模式
 const FILTER_ALL: string = 'all';
@@ -16,6 +20,8 @@ class ScheduleCard {
   title: string = '';
   startTime: number = 0;
   endTime: number = 0;
+  location: string = '';
+  description: string = '';
   ddl: boolean = false;
 }
 
@@ -25,6 +31,10 @@ export struct SchedulePage {
   @Prop @Watch('onTabIndexChange') currentTabIndex: number = 0;
   @State schedules: ScheduleCard[] = [];
   @State filterMode: string = FILTER_ACTIVE;
+  @State refreshToken: number = 0;
+  @State isShowEditSheet: boolean = false;
+  @State editingEvent: ScheduleEvent = new ScheduleEvent();
+  private editingEventId: number = 0;
   private refreshTimer: number = -1;
 
   aboutToAppear(): void {
@@ -46,6 +56,12 @@ export struct SchedulePage {
     }
   }
 
+  // 卡片编辑弹层
+  @Builder
+  EditorSheet() {
+    ScheduleItemEditor({ item: this.editingEvent })
+  }
+
   // 读取本应用日历里的全部事件，组装成列表数据
   private async loadSchedules(): Promise<void> {
     const todoService = TodoService.getInstance();
@@ -62,12 +78,18 @@ export struct SchedulePage {
       card.title = event.title ?? '未命名日程';
       card.startTime = event.startTime;
       card.endTime = event.endTime;
+      if (event.location !== undefined) {
+        card.location = event.location.location ?? '';
+      }
+      card.description = event.description ?? '';
       card.ddl = todoService.isDdl(card.id);
       return card;
     });
     // 日程按开始时间、待办按截止时间，合并后从早到晚排列
     cards.sort((left: ScheduleCard, right: ScheduleCard) => this.getSortTime(left) - this.getSortTime(right));
     this.schedules = cards;
+    // 列表重建时让每张卡片的滑动操作闭包指向这次的数据
+    this.refreshToken += 1;
   }
 
   // 切换某条事件是日程还是待办
@@ -114,6 +136,63 @@ export struct SchedulePage {
   // 截止时间已经过去的事件
   private isExpired(card: ScheduleCard): boolean {
     return card.endTime <= Date.now();
+  }
+
+  // 打开编辑弹层，用卡片当前内容填充临时事件
+  private openEditor(card: ScheduleCard): void {
+    this.editingEvent = new ScheduleEvent({
+      title: card.title,
+      startTime: Prompts.getFormattedDate(new Date(card.startTime)),
+      endTime: Prompts.getFormattedDate(new Date(card.endTime)),
+      location: card.location,
+      description: card.description,
+      ddl: card.ddl
+    });
+    this.editingEventId = card.id;
+    this.isShowEditSheet = true;
+  }
+
+  // 编辑弹层关闭后把改动写回系统日历
+  private async saveScheduleEdit(): Promise<void> {
+    const calendar = CalendarService.getInstance().getCalendar();
+    if (calendar === undefined) {
+      return;
+    }
+    const event: calendarManager.Event = {
+      id: this.editingEventId,
+      type: calendarManager.EventType.NORMAL,
+      title: this.editingEvent.title,
+      location: { location: this.editingEvent.location },
+      startTime: parseToDate(this.editingEvent.startTime).getTime(),
+      endTime: parseToDate(this.editingEvent.endTime).getTime(),
+      description: this.editingEvent.description,
+      reminderTime: [30]
+    };
+    await calendar.updateEvent(event);
+    await this.loadSchedules();
+  }
+
+  // 右滑删除：确认后从系统日历里删掉这条事件
+  private async requestDelete(card: ScheduleCard): Promise<void> {
+    const response = await this.getUIContext().getPromptAction().showDialog({
+      title: '！？删除？！',
+      message: '会从系统日历里永久删掉（真的很久！）',
+      buttons: [
+        { text: '取消', color: '#808080' },
+        { text: '删吧', color: '#FF5B5B' }
+      ]
+    });
+    if (response.index !== 1) {
+      return;
+    }
+    const calendar = CalendarService.getInstance().getCalendar();
+    if (calendar === undefined) {
+      return;
+    }
+    await calendar.deleteEvent(card.id);
+    await TodoService.getInstance().setDdl(card.id, false);
+    this.getUIContext().getPromptAction().showToast({ message: '已删除' });
+    await this.loadSchedules();
   }
 
   build() {
@@ -177,45 +256,73 @@ export struct SchedulePage {
 
         ForEach(this.getVisibleSchedules(), (schedule: ScheduleCard) => {
           ListItem() {
-            Column() {
-              // 标题与「日程 / 待办」切换按钮
-              Row() {
-                Text(schedule.title)
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor(Color.White)
-                  .layoutWeight(1)
-                  .maxLines(1)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-                ScheduleTypeSwitch({
-                  ddl: schedule.ddl,
-                  onToggle: (ddl: boolean) => {
-                    this.changeDdl(schedule, ddl);
-                  }
-                })
+            SwipeActionCard({
+              onDelete: () => {
+                this.requestDelete(schedule)
+              },
+              onEdit: () => {
+                this.openEditor(schedule)
+              }
+            }) {
+              Column() {
+                // 标题与「日程 / 待办」切换按钮
+                Row() {
+                  Text(schedule.title)
+                    .fontSize(16)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor(Color.White)
+                    .layoutWeight(1)
+                    .maxLines(1)
+                    .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  ScheduleTypeSwitch({
+                    ddl: schedule.ddl,
+                    onToggle: (ddl: boolean) => {
+                      this.changeDdl(schedule, ddl);
+                    }
+                  })
+                }
+                .width('100%')
+
+                // 地点
+                if (schedule.location.length > 0) {
+                  Text(`@ ${schedule.location}`)
+                    .fontSize(14)
+                    .fontColor(Color.Gray)
+                    .width('100%')
+                    .margin({ top: 4 })
+                }
+
+                // 待办显示截止时间，日程显示开始时间；已过期时标红
+                Text(schedule.ddl ? `截止 ${Prompts.getFormattedDate(new Date(schedule.endTime))}` :
+                  `开始 ${Prompts.getFormattedDate(new Date(schedule.startTime))}`)
+                  .fontSize(14)
+                  .fontColor(this.isExpired(schedule) ? '#FF5B5B' : Color.Gray)
+                  .width('100%')
+                  .margin({ top: 6 })
               }
               .width('100%')
-
-              // 待办显示截止时间，日程显示开始时间；已过期时标红
-              Text(schedule.ddl ? `截止 ${Prompts.getFormattedDate(new Date(schedule.endTime))}` :
-                `开始 ${Prompts.getFormattedDate(new Date(schedule.startTime))}`)
-                .fontSize(14)
-                .fontColor(this.isExpired(schedule) ? '#FF5B5B' : Color.Gray)
-                .width('100%')
-                .margin({ top: 6 })
+              .padding(16)
+              .backgroundColor('#1C1C1C')
             }
-            .width('100%')
-            .padding(16)
-            .backgroundColor('#1C1C1C')
-            .borderRadius(16)
           }
-        // key 带上类型与过期状态，状态变化时强制重建卡片
-        }, (schedule: ScheduleCard) => `${schedule.id}-${schedule.ddl}-${schedule.endTime <= Date.now()}`)
+
+          // key 带上刷新标记、类型与过期状态，状态变化时强制重建卡片
+        }, (schedule: ScheduleCard) => `${this.refreshToken}-${schedule.id}-${schedule.ddl}-${schedule.endTime <=
+        Date.now()}`)
       }
       .width('100%')
       .layoutWeight(1)
       .padding({ left: '5%', right: '5%', bottom: 24 })
       .edgeEffect(EdgeEffect.Spring)
+      .bindSheet(this.isShowEditSheet, this.EditorSheet(), {
+        detents: [SheetSize.MEDIUM, SheetSize.LARGE],
+        preferType: SheetType.BOTTOM,
+        title: { title: '编辑日程' },
+        onDisappear: () => {
+          this.isShowEditSheet = false
+          this.saveScheduleEdit()
+        }
+      })
     }
     .width('100%')
     .height('100%')

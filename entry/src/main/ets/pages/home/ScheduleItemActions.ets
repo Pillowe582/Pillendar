@@ -1,47 +1,16 @@
 import { ScheduleEvent } from '../../data_types/ScheduleEvent';
-import { DeleteScheduleButton } from './DeleteScheduleButton';
-import { ScheduleItemEditor } from './ScheduleItemEditor';
 import { addScheduleToCalendar } from './ScheduleCalendarHelper';
 import { TodoService } from '../../services/TodoService';
 
-// 日程卡片的操作行：删除 / 编辑（含编辑弹层）/ 确认写入日历
+// 日程卡片的操作行：确认写入日历
 @Component
 export struct ScheduleItemActions {
   @ObjectLink item: ScheduleEvent;
-  @State isShowEditSheet: boolean = false;
   onDelete: () => void = () => {
-  }
-
-  @Builder
-  EditorSheet() {
-    ScheduleItemEditor({ item: this.item })
   }
 
   build() {
     Row() {
-      DeleteScheduleButton({
-        onDelete: () => {
-          this.onDelete();
-        }
-      })
-
-      Button('编辑', { type: ButtonType.Capsule })
-        .fontColor(Color.White)
-        .buttonStyle(ButtonStyleMode.NORMAL)
-        .onClick(() => {
-          this.isShowEditSheet = true
-          console.log("试图编辑")
-        })
-        .bindSheet(this.isShowEditSheet, this.EditorSheet(), {
-          detents: [SheetSize.MEDIUM, SheetSize.LARGE, 600],
-          preferType: SheetType.BOTTOM,
-          title: { title: `编辑 ${this.item.title}` },
-          onDisappear: () => {
-            this.isShowEditSheet = false
-          },
-
-        });
-
       Button('确认', { type: ButtonType.Capsule })
         .buttonStyle(ButtonStyleMode.EMPHASIZED)
         .width('50%')
@@ -61,6 +30,6 @@ export struct ScheduleItemActions {
     }
     .padding({ top: 16 })
     .width('100%')
-    .justifyContent(FlexAlign.SpaceBetween)
+    .justifyContent(FlexAlign.End)
   }
 }
