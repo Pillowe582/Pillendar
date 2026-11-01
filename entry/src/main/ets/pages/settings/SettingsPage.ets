@@ -3,7 +3,6 @@ import { DEFAULT_LLM_SETTINGS, isRequestJsonValid } from '../../file_handler/LLM
 import { LLMSettings } from '../../data_types/LLMSettings';
 import { LLMSettingsService } from '../../services/LLMSettingsService';
 import { LLMService } from '../../services/LLMService';
-import { TodoService } from '../../services/TodoService';
 
 // 设置页：大模型接口参数收在可展开的 section 中，保存按钮在标题栏，恢复默认在列表底部
 @Component
@@ -15,7 +14,6 @@ export struct SettingsPage {
   @State prompt: string = DEFAULT_LLM_SETTINGS.prompt;
   @State requestJson: string = DEFAULT_LLM_SETTINGS.requestJson;
   @State apiExpanded: boolean = false;
-  @State defaultShowInTodo: boolean = true;
 
   aboutToAppear(): void {
     this.loadSettings();
@@ -32,11 +30,6 @@ export struct SettingsPage {
     this.model = settings.model;
     this.prompt = settings.prompt;
     this.requestJson = settings.requestJson;
-
-    // 读取新日程默认是否加入待办
-    const todoService = TodoService.getInstance();
-    await todoService.init(context);
-    this.defaultShowInTodo = todoService.getDefaultShowInTodo();
   }
 
   // 校验请求 JSON 后保存配置
@@ -79,8 +72,6 @@ export struct SettingsPage {
     this.prompt = DEFAULT_LLM_SETTINGS.prompt;
     this.requestJson = DEFAULT_LLM_SETTINGS.requestJson;
     await LLMSettingsService.getInstance().save(DEFAULT_LLM_SETTINGS);
-    this.defaultShowInTodo = true;
-    await TodoService.getInstance().setDefaultShowInTodo(true);
     this.getUIContext().getPromptAction().showToast({ message: '已恢复默认设置' });
   }
 
@@ -314,35 +305,6 @@ export struct SettingsPage {
               .width('100%')
               .margin({ top: 16 })
             }
-          }
-          .width('100%')
-          .padding(16)
-          .backgroundColor('#1C1C1C')
-          .borderRadius(16)
-        }
-
-        // 待办设置 section
-        ListItem() {
-          Column() {
-            Text('待办设置')
-              .fontSize(16)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(Color.White)
-              .width('100%')
-
-            Row() {
-              Text('新日程默认加入待办')
-                .fontSize(14)
-                .fontColor(Color.Gray)
-              Blank()
-              Toggle({ type: ToggleType.Switch, isOn: this.defaultShowInTodo })
-                .onChange(async (isOn: boolean) => {
-                  this.defaultShowInTodo = isOn;
-                  await TodoService.getInstance().setDefaultShowInTodo(isOn);
-                })
-            }
-            .width('100%')
-            .margin({ top: 12 })
           }
           .width('100%')
           .padding(16)

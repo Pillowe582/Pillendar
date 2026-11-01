@@ -17,19 +17,23 @@ export const DEFAULT_LLM_SETTINGS: LLMSettings = {
       "startTime":"YYYY-MM-DD HH:mm",
       "endTime":"YYYY-MM-DD HH:mm",
       "location":"",
-      "description":""
+      "description":"",
+      "ddl":false
     },
     {
       "title":"",
       "startTime":"YYYY-MM-DD HH:mm",
       "endTime":"YYYY-MM-DD HH:mm",
       "location":"",
-      "description":""
+      "description":"",
+      "ddl":false
     }
   ]
 }
 如果开始时间不确定，默认为当天早上9点。
 如果结束时间不确定，默认为开始时间之后的一小时。
+"ddl" 字段为布尔值：true 表示这是只有截止时间的待办（有始无终），false 表示这是有开始和结束时间的日程。
+如果文本只是要求在某个时间前完成某件事、没有明确的开始时间，就把 ddl 设为 true，startTime 可以留空。
 回复的"title"字段必须要简短，尽量十个字以内，只保留核心事件的谓语和宾语，不要带地点等信息。
 除非你100%确认这段文本中有多个事件，否则只输出最核心的事件日程。
 只返回JSON，不要解释。`,

@@ -49,9 +49,8 @@ export struct ScheduleItemActions {
         .onClick(() => {
           addScheduleToCalendar(this.item)
             .then(async (eventId: number) => {
-              // 按设置项决定这条日程是否默认出现在待办中
-              const todoService = TodoService.getInstance();
-              await todoService.setShownInTodo(eventId, todoService.getDefaultShowInTodo());
+              // 记录这条日程是日程还是待办
+              await TodoService.getInstance().setDdl(eventId, this.item.ddl);
               this.getUIContext().getPromptAction().showToast({ message: '已添加到日历' });
               this.onDelete();
             })

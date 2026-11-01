@@ -4,4 +4,5 @@ export interface ScheduleJson {
   endTime: string;
   location?: string;
   description?: string;
+  ddl: boolean;
 }
